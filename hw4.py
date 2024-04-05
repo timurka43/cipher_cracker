@@ -2,7 +2,7 @@
 Title: Homework 4, parts 1 and 2. Cracking a Cipher
 Author: Timur Kasimov (Grinnell, 2025)
 Data Created: March 31, 2024
-Date Updated: April 4th, 2024
+Date Updated: April 5th, 2024
 
 Purpose: Implement and test a cipher-cracker using Metropolis-Hastings
 
@@ -29,7 +29,15 @@ LENGTH = len(ALPHABET)
 MAXITER = 10000 # limit each run to 10,000 iterations
 MIN = math.exp(-20) # value to replace zeros in the transition matrix
 
+# Set to TRUE if the csv file with transition matrix is already saved
+# Set to FALSE if running on a new machine and need to create the transition matrix
+# Note: csv file with the transition matrix must be saved in the same directory as the
+# current file hw4.py
 TRANSITION_MATRIX_SAVED = True
+
+# Set to true if want to confuse the deciphering Metropolis-Hastings algorithm
+# by reversing the message before enciphering it. 
+CONFUSE = False
 
 
 
@@ -170,7 +178,7 @@ def encipher(string, cipher):
 
 
 ##############
-#  calc_num  #
+#  calc_sum  #
 ##############
 '''
 Pre-conditions:
@@ -232,51 +240,83 @@ def scramble(message):
      return encipher(message, mapping)
 
 
-#############
-#  reverse  #
-#############
+##################
+#  insert-chars  #
+##################
 '''
 Pre-conditions:
      message: original message
 Post-conditions: 
-     reversed message: reversed string from the original message
-Purpose: reverses the message before using substitution cipher on it.
+     modified message: modified string with unlikely character transition
+     insterted every 10 characters
+Purpose: modifies the message before using substitution cipher on it.
      This is one of the ways to confuse the decipherers and make the
      Metropolis-Hastings deciphering algorithm fail.
 '''
-def reverse(message):
-     return message[::-1]
-
-
-
-########################
-#####  MAIN BLOCK  #####
-########################
-if __name__ == "__main__":
+def insert_chars(message):
+     # convert the string to a list of chars
+     my_list = list(message)
+     # for each character in the message
+     index = 0
+     length = len(my_list)
+     while (index < length):
+          my_list.insert(index, 'T')
+          my_list.insert(index, 'q')
+          index += 7
+          length += 2
      
-     # define initial mapping in the same way as the global alphabet 
-     mapping = list(string.ascii_letters) + [' ', ',', '.']
-
-     # record transition matrix from War and Peace
-     matrix = read_transition_matrix()
+     # join the list of characters back into a string to return
+     message = ''.join(str(x) for x in my_list)
+     return message
 
 
-    #  define the message
-     message = "Nicholas and his wife lived together so happily that even Sonya and the old countess, who felt jealous and would have liked them to disagree, could find nothing to reproach them with but even they had their moments of antagonism. Occasionally, and it was always just after they had been happiest together, they suddenly had a feeling of estrangement and hostility, which occurred most frequently during Countess Mary pregnancies, and this was such a time."
-     print(message)
-     # message = reverse(message)
+##################
+#  delete_chars  #
+##################
+'''
+Pre-conditions:
+     message: previously modified message using insert_chars
+Post-conditions: 
+     message: de-modified string equal to the original message
+Purpose: de-modifies the message that was previously modified to protect
+     from Metropolis attacker
+'''
+def delete_chars(message):
+     # convert the string to a list of chars
+     my_list = list(message)
+     # for each character in the message
+     index = 0
+     length = len(my_list)
+     while (index < length):
+          del my_list[index:index+2]
+          index += 5
+          length -= 2
+
+     # join the list of characters back into a string to return
+     message = ''.join(str(x) for x in my_list)
+     return message
 
 
-
-     # scramble the message
-     scrambled_message = scramble(message)
-
+##############
+#  decipher  #
+##############
+'''
+Pre-conditions:
+     scrambled_message: ciphered message to be deciphered
+     mapping: an alphabet in the form of the list of characters, 
+     not necessarily in order
+Post-conditions: 
+     deciphered: returns deciphered message as a string
+Purpose: runs a chain of MAXITER (10,000) iterations using Metropolis-
+     Hastings to try and decipher the scambled message.
+'''
+def decipher(scrambled_message, mapping):
      # create an initial deciphering mapping
      permute_alphabet()
 
      # first attempt at deciphering
      deciphered_message = encipher(scrambled_message, mapping)
-     # calculate new sum of logs of probabilities of transitions
+     # calculate sum of logs of probabilities of transitions
      old_sum = calc_sum(deciphered_message, matrix)
 
      # to keep track of best mapping
@@ -293,8 +333,9 @@ if __name__ == "__main__":
           # print("Current Mapping")
           # print(mapping)
           # print()
-        
-          print("Iteration:", iter)
+
+          if (iter % 2000 == 0):
+               print("Iteration:", iter)
           # propose a new mapping
           new_mapping = swap_two(mapping)
  
@@ -320,22 +361,84 @@ if __name__ == "__main__":
                    for i in range(len(mapping)):
                         best_mapping[i] = mapping[i]
 
+
+     print()
+     print("The best deciphered message is:")
+     if (CONFUSE):
+          deciphered = delete_chars(encipher(scrambled_message, best_mapping))
+     else:
+          deciphered = encipher(scrambled_message, best_mapping)
+     print(deciphered)
+     print()
+    
+
+     # DEBUGGING
+     # print("Scrambled Message:")
+     # print(scrambled_message)
+     # print()
+     # print("Last deciphered")
+     # print(encipher(scrambled_message, mapping))
+     # print("Counter: ", counter)
+     # print("Acceptances: ", acceptances)
+
+     return deciphered
+
+
+# end decipher
+
+
+
+########################
+#####  MAIN BLOCK  #####
+########################
+if __name__ == "__main__":
+     
+     # define initial mapping in the same way as the global alphabet 
+     mapping = list(string.ascii_letters) + [' ', ',', '.']
+
+     # create and save transition matrix if needed
+     if (not TRANSITION_MATRIX_SAVED):
+          create_transition_matrix()
+     # record transition matrix from War and Peace
+     matrix = read_transition_matrix()
+     
+
+
+    #  define the message
+     message = "The little princess went round the table with quick, short, swaying steps, her workbag on her arm, and gaily spreading out her dress sat down on a sofa near the silver samovar, as if all she was doing was a pleasure to herself and to all around her. I have brought my work, said she in French, displaying her bag and addressing all present. Mind, Annette, I hope you have not played a wicked trick on me, she added, turning to her hostess. You wrote that it was to be quite a small reception, and just see how badly I am dressed. And she spread out her arms to show her short waisted, lace trimmed, dainty gray dress, girdled with a broad ribbon just below the breast. Nicholas and his wife lived together so happily that even Sonya and the old countess, who felt jealous and would have liked them to disagree, could find nothing to reproach them with but even they had their moments of antagonism. Occasionally, and it was always just after they had been happiest together, they suddenly had a feeling of estrangement and hostility, which occurred most frequently during Countess Mary pregnancies, and this was such a time."
+     # print(message)
+
+     # Tricking the algorithm by modifiying the message
+     if (CONFUSE):
+          message = insert_chars(message)
+          # print("Tricked/Modified message")
+          # print(message)
+
+
+     # DEBUGGING
+     # print("Tricked")
+     # print(message)
+     # print()
+     # print("Detricked")
+     # print(delete_chars(insert_chars(message)))
+     # print()
+          
+
+     # scramble the message
+     scrambled_message = scramble(message)
+     # print("Scrambled message")
+     # print(scrambled_message)
+
+
+     decipher(scrambled_message, mapping)
+
+     # print original message in terminal to compare with best attempt at deciphering
+     # print(message)
+     if (CONFUSE):
+          message = delete_chars(message)
      print("Original message:")
      print(message)
      print()
-     print("Scrambled Message:")
-     print(scrambled_message)
-     print()
-     print("The best deciphered message is:")
-     print(encipher(scrambled_message, best_mapping))
-     print()
-     print("Last deciphered")
-     print(encipher(scrambled_message, mapping))
-     print("Counter: ", counter)
-     print("Acceptances: ", acceptances)
-
-
-
 
 
      
@@ -343,11 +446,67 @@ if __name__ == "__main__":
 
 
 
-    
+#############################
+#############################
+#######              ########
+#######    PART 2    ########
+#######              ########
+#############################
+#############################
+     
+# IN ORDER TO TRICK THE ALGORITHM, SET THE GLOBAL VARIABLE 'CONFUSE'
+# TO TRUE AT THE BEGINNING OF THIS DOCUMENT. THIS CONDITION WILL 
+# AUTOMATICALLY TAKE CARE OF MODIFYING AND DEMODIFYING THE MESSAGE
+# AND IT WILL TRICK THE METROPOLIS ALGORITHM, FORCING IT TO FAIL
+     
+''' 
 
-''' two ways of tricking the algorithm:
+Two ways of tricking the Metropolis-Hastings deciphering algorithm:
 
-1. reverse the message
-2. add an unlikely transition like qt every 10 characters 
 
+1. Inserting Repeated Unlikely Transition Pair (IMPLEMENTED).
+
+Before scrambling the message with a substitution cipher, first 
+insert the same unlikely transition pair (2 characters) at every 5
+characters into the original message, e.g 'qT'. So the message 
+"princess" becomes "qTprincqTess". This will make the message
+to appear very unlikely to be randomly generated from the 
+"proper English" and will mess with acceptance probabilities of 
+Metropolis-Hastings attacker. This is a very simple method to modify 
+the initial message using insertion (and the de-modify using deletion)
+that tricks the algorithm
+
+Maximum Security: While this method succeeds in tricking the Metropolis
+algorithm, i do not think it offers a lot of security, since it is highly
+plausible that even upon visual insepction of the ciphered message,
+one can notice the pattern of constantly repeated pair of characters every 5 letters.
+It is a rather basic and obvious way to insert the same pair of 
+characters throughout the text that is easily noticeable and also reversible.
+
+Efficient Security: On the other hand, this simple method only takes two simple functions
+to implement, and yet it still provides a certain level
+of security in that the algorithm cannot decipher the modified message. Furthermore, since
+the message appears as scrambled nonsense to Metropolis attacker, one may argue that
+visual insepction of the scrambled message is not enough to notice such a modification.
+
+
+
+
+
+2. Inserting Various Unlikely Transition Pairs (NOT IMPLEMENTED)
+
+This second method similarly uses insertion of unlikely transition pairs into text,
+but for this one we can first create a list of all impossible character transitions 
+in the English language and randomly insert any such pair at fixed intervals in the
+message. 
+
+This provides much more security since now there is a much less obious repeated pattern
+of the two same characters constantly showing up at equal intervals. With this method, 
+we should not have any pair repeatedly showing up consistently. 
+This method is still highly efficient for its security, although it takes somewhat more 
+work that is not done here. To implement this method, one can take all the impossible character
+transition pairs from the transition matrix (any values in the matrix equal to zero or MIN)
+and put those character pairs in a list. Then modify the insert_chars function so that it 
+randomly picks a pair of characters to insert.
+ 
 '''
