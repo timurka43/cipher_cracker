@@ -111,7 +111,7 @@ def create_transition_matrix():
      # print(trans_matrix)
      # calculate the total number of valid transitions
      sum = trans_matrix.sum()
-     # print("SUM: ", sum)
+
      # transform absolute counts into proportions of total transitions
      trans_matrix = trans_matrix * (1/sum)
 
@@ -120,7 +120,7 @@ def create_transition_matrix():
           for col in range(LENGTH):
                if (trans_matrix[row, col] == 0.0):
                     trans_matrix[row, col] = MIN  
-     # print(trans_matrix)
+
 
      # save transition matrix as file
      df = pd.DataFrame(data = trans_matrix)
@@ -327,12 +327,6 @@ def decipher(scrambled_message, mapping):
      acceptances = 0
 
      for iter in range(MAXITER):
-          # print("Best mapping and probability")   
-          # print(best_mapping)
-          # print(best_sum)
-          # print("Current Mapping")
-          # print(mapping)
-          # print()
 
           if (iter % 2000 == 0):
                print("Iteration:", iter)
@@ -341,7 +335,6 @@ def decipher(scrambled_message, mapping):
  
           # decipher scrambled message using the new proposed mapping
           deciphered_message = encipher(scrambled_message, new_mapping)
-          # print(deciphered_message)
 
           # calculate acceptance probability and accept or reject new mapping
           new_sum = calc_sum(deciphered_message, matrix)
@@ -370,20 +363,8 @@ def decipher(scrambled_message, mapping):
           deciphered = encipher(scrambled_message, best_mapping)
      print(deciphered)
      print()
-    
-
-     # DEBUGGING
-     # print("Scrambled Message:")
-     # print(scrambled_message)
-     # print()
-     # print("Last deciphered")
-     # print(encipher(scrambled_message, mapping))
-     # print("Counter: ", counter)
-     # print("Acceptances: ", acceptances)
 
      return deciphered
-
-
 # end decipher
 
 
@@ -406,34 +387,20 @@ if __name__ == "__main__":
 
     #  define the message
      message = "The little princess went round the table with quick, short, swaying steps, her workbag on her arm, and gaily spreading out her dress sat down on a sofa near the silver samovar, as if all she was doing was a pleasure to herself and to all around her. I have brought my work, said she in French, displaying her bag and addressing all present. Mind, Annette, I hope you have not played a wicked trick on me, she added, turning to her hostess. You wrote that it was to be quite a small reception, and just see how badly I am dressed. And she spread out her arms to show her short waisted, lace trimmed, dainty gray dress, girdled with a broad ribbon just below the breast. Nicholas and his wife lived together so happily that even Sonya and the old countess, who felt jealous and would have liked them to disagree, could find nothing to reproach them with but even they had their moments of antagonism. Occasionally, and it was always just after they had been happiest together, they suddenly had a feeling of estrangement and hostility, which occurred most frequently during Countess Mary pregnancies, and this was such a time."
-     # print(message)
+
 
      # Tricking the algorithm by modifiying the message
      if (CONFUSE):
           message = insert_chars(message)
-          # print("Tricked/Modified message")
-          # print(message)
 
-
-     # DEBUGGING
-     # print("Tricked")
-     # print(message)
-     # print()
-     # print("Detricked")
-     # print(delete_chars(insert_chars(message)))
-     # print()
-          
+       
 
      # scramble the message
      scrambled_message = scramble(message)
-     # print("Scrambled message")
-     # print(scrambled_message)
-
 
      decipher(scrambled_message, mapping)
 
      # print original message in terminal to compare with best attempt at deciphering
-     # print(message)
      if (CONFUSE):
           message = delete_chars(message)
      print("Original message:")
