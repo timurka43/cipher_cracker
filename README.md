@@ -3,7 +3,7 @@ This program cracks a substitution cipher using Metropolis-Hastings Algorithms
 
 
 ## Algorithm Idea:
-  The general idea of how the metropolis-hastings algorithm works in this setting is as follows: The algorithm repeatedly generates a reverse substitution cipher, deciphers the input text and evalutes to what extent the new deciphered text appears to be in proper English. The closer the text 
+  The general idea of how the metropolis-hastings algorithm works in this setting is as follows: The algorithm repeatedly generates a reverse substitution cipher, deciphers the input text and evalutes to what extent the new deciphered text appears to be in proper English. The closer the text....
 
 
 ## Defining "Proper English" with Tolstoy's _War and Peace_
