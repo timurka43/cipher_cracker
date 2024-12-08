@@ -4,7 +4,7 @@
 
 
 # cipher_cracker
-This program cracks a substitution cipher using Metropolis-Hastings Algorithm
+This program cracks a substitution cipher using Metropolis-Hastings Algorithm - one of Markov Chain Monte Carlo (MCMC) methods.
 
 
 ## Algorithm Idea:
