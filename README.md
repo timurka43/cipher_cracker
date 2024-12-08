@@ -4,7 +4,7 @@
 
 
 # cipher_cracker
-This program cracks a substitution cipher using Metropolis-Hastings Algorithms
+This program cracks a substitution cipher using Metropolis-Hastings Algorithm
 
 
 ## Algorithm Idea:
